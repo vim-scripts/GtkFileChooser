@@ -1,34 +1,23 @@
-diff -ru vim62-orig/src/config.h.in vim62-chooser/src/config.h.in
---- vim62-orig/src/config.h.in	2004-05-08 22:23:47.000000000 +0200
-+++ vim62-chooser/src/config.h.in	2004-05-08 22:26:01.000000000 +0200
-@@ -317,6 +317,9 @@
- /* Define if GTK+ multihead support is available (requires GTK+ >= 2.1.1). */
- #undef HAVE_GTK_MULTIHEAD
+--- ../vim63b.orig/src/gui_gtk.c	2004-05-12 18:01:45.000000000 +0200
++++ src/gui_gtk.c	2004-05-19 19:26:19.000000000 +0200
+@@ -39,6 +39,16 @@
  
-+/* Define if GTK+ has FileChooser widget */
+ #include "vim.h"
+ 
++/* Check to see if we are able to use GtkFileChooser */
 +#undef HAVE_FILECHOOSER
 +
- /* Define if your X has own locale library */
- #undef X_LOCALE
- 
-diff -ru vim62-orig/src/configure.in vim62-chooser/src/configure.in
---- vim62-orig/src/configure.in	2004-05-08 22:23:47.000000000 +0200
-+++ vim62-chooser/src/configure.in	2004-05-08 22:31:58.000000000 +0200
-@@ -1487,6 +1487,9 @@
- 		|| test "0$gtk_major_version" -gt 2; then
- 	  AC_DEFINE(HAVE_GTK_MULTIHEAD)
- 	fi
-+	if test "0$gtk_minor_version" -ge 4; then
-+	  AC_DEFINE(HAVE_FILECHOOSER)
-+	fi
-       fi
-       dnl
-       dnl if GTK exists, and it's not the 1.0.x series, then check for GNOME.
-Only in vim62-chooser/src: configure.in~
-diff -ru vim62-orig/src/gui_gtk.c vim62-chooser/src/gui_gtk.c
---- vim62-orig/src/gui_gtk.c	2004-05-08 22:23:41.000000000 +0200
-+++ vim62-chooser/src/gui_gtk.c	2004-05-08 22:33:00.000000000 +0200
-@@ -1202,6 +1202,7 @@
++#if defined(HAVE_GTK2)
++# if GTK_MINOR_VERSION >= 4
++#  define HAVE_FILECHOOSER
++# endif
++#endif
++
++
+ #ifdef FEAT_GUI_GNOME
+ /* Gnome redefines _() and N_().  Grrr... */
+ # ifdef _
+@@ -1202,6 +1212,7 @@
   * Implementation of the file selector related stuff
   */
  
@@ -36,7 +25,7 @@ diff -ru vim62-orig/src/gui_gtk.c vim62-chooser/src/gui_gtk.c
  /*ARGSUSED*/
      static void
  browse_ok_cb(GtkWidget *widget, gpointer cbdata)
-@@ -1233,6 +1234,7 @@
+@@ -1233,6 +1244,7 @@
      if (gtk_main_level() > 0)
  	gtk_main_quit();
  }
@@ -44,7 +33,7 @@ diff -ru vim62-orig/src/gui_gtk.c vim62-chooser/src/gui_gtk.c
  
  /*ARGSUSED*/
      static gboolean
-@@ -1270,7 +1272,11 @@
+@@ -1270,7 +1282,11 @@
  	       char_u *initdir,
  	       char_u *filter)
  {
@@ -56,7 +45,7 @@ diff -ru vim62-orig/src/gui_gtk.c vim62-chooser/src/gui_gtk.c
      char_u dirbuf[MAXPATHL];
      char_u *p;
  
-@@ -1280,6 +1286,7 @@
+@@ -1280,6 +1296,7 @@
  
      if (!gui.filedlg)
      {
@@ -64,7 +53,7 @@ diff -ru vim62-orig/src/gui_gtk.c vim62-chooser/src/gui_gtk.c
  	gui.filedlg = gtk_file_selection_new((const gchar *)title);
  	gtk_window_set_modal(GTK_WINDOW(gui.filedlg), TRUE);
  	gtk_window_set_transient_for(GTK_WINDOW(gui.filedlg),
-@@ -1296,6 +1303,26 @@
+@@ -1296,6 +1313,26 @@
  	gtk_signal_connect_object(GTK_OBJECT(gui.filedlg),
  		"destroy", GTK_SIGNAL_FUNC(browse_destroy_cb),
  		GTK_OBJECT(gui.filedlg));
@@ -91,7 +80,7 @@ diff -ru vim62-orig/src/gui_gtk.c vim62-chooser/src/gui_gtk.c
      }
      else
  	gtk_window_set_title(GTK_WINDOW(gui.filedlg), (const gchar *)title);
-@@ -1319,18 +1346,42 @@
+@@ -1319,18 +1356,41 @@
      if (dflt != NULL && *dflt != NUL
  			      && STRLEN(dirbuf) + 2 + STRLEN(dflt) < MAXPATHL)
  	STRCAT(dirbuf, dflt);
@@ -107,7 +96,6 @@ diff -ru vim62-orig/src/gui_gtk.c vim62-chooser/src/gui_gtk.c
 +    else
 +        gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(fs),
 +                (const gchar *)dirbuf);
-+    printf("dirbuf: %s\n", dirbuf);
 +#endif
 +    
  # ifndef HAVE_GTK2
