@@ -1,0 +1,5 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=981
+
+This patch makes GTK/GNOME VIM use new GtkFileChooser for opening and saving files. It requires at least version 2.4 of GTK+ .
+
+Comments are welcome :)
